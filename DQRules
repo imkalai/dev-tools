@@ -1,0 +1,834 @@
+For string data elements, common **Data Quality (DQ) rules** ensure consistency, accuracy, and completeness. Here are some key rules categorized by their purpose:
+
+---
+
+## **1. Completeness Rules**
+These rules check whether a string field has a value.
+
+### ✅ **Null or Empty Check**  
+Ensures that the field is not null or empty.  
+📌 **Example:** `Customer_Name` must not be null or blank.  
+**Rule Name:** `Customer_Name_NullCheck`  
+
+```sql
+SELECT * FROM Customers WHERE Customer_Name IS NULL OR Customer_Name = '';
+```
+
+---
+
+## **2. Format & Pattern Rules**
+These rules validate that a string conforms to a required format.
+
+### ✅ **Allowed Characters Check**  
+Ensures that only valid characters (letters, numbers, special characters) are used.  
+📌 **Example:** `Product_Code` should only contain uppercase letters and numbers.  
+**Rule Name:** `Product_Code_AllowedCharacters`  
+
+```sql
+SELECT * FROM Products WHERE Product_Code NOT LIKE '[A-Z0-9]%';
+```
+
+### ✅ **Regular Expression (Regex) Format Check**  
+Validates that a string follows a specified regex pattern.  
+📌 **Example:** `Email` should follow the standard email format.  
+**Rule Name:** `Customer_Email_FormatCheck`  
+
+```sql
+SELECT * FROM Customers WHERE Email NOT LIKE '%@%.%';
+```
+
+### ✅ **Length Constraint**  
+Ensures that the string is within a defined length limit.  
+📌 **Example:** `Zip_Code` should be exactly 5 or 9 characters.  
+**Rule Name:** `Zip_Code_LengthCheck`  
+
+```sql
+SELECT * FROM Addresses WHERE LENGTH(Zip_Code) NOT IN (5,9);
+```
+
+---
+
+## **3. Standardization Rules**
+Ensures consistency in how values are stored.
+
+### ✅ **Case Standardization**  
+Ensures that text follows a predefined case rule (uppercase, lowercase, title case).  
+📌 **Example:** `Country_Name` should always be uppercase.  
+**Rule Name:** `Country_Name_UppercaseCheck`  
+
+```sql
+SELECT * FROM Locations WHERE Country_Name <> UPPER(Country_Name);
+```
+
+### ✅ **Trim Spaces Check**  
+Ensures that values do not have leading or trailing spaces.  
+📌 **Example:** `Customer_Name` should not contain extra spaces.  
+**Rule Name:** `Customer_Name_TrimCheck`  
+
+```sql
+SELECT * FROM Customers WHERE Customer_Name LIKE ' %' OR Customer_Name LIKE '% ';
+```
+
+---
+
+## **4. Consistency & Uniqueness Rules**
+Ensures that string values are consistent across the dataset.
+
+### ✅ **Duplicate Check**  
+Ensures that values in a column are unique where required.  
+📌 **Example:** `Employee_ID` should be unique.  
+**Rule Name:** `Employee_ID_UniquenessCheck`  
+
+```sql
+SELECT Employee_ID, COUNT(*) FROM Employees GROUP BY Employee_ID HAVING COUNT(*) > 1;
+```
+
+### ✅ **Referential Integrity Check**  
+Ensures that a field has a valid reference to another table.  
+📌 **Example:** `Customer_State` should match a predefined list of state codes.  
+**Rule Name:** `Customer_State_ReferenceCheck`  
+
+```sql
+SELECT * FROM Customers WHERE Customer_State NOT IN (SELECT State_Code FROM States);
+```
+
+---
+
+## **5. Business Rules & Custom Checks**
+Validates data according to business requirements.
+
+### ✅ **Prohibited Words Check**  
+Ensures that certain words are not used in the string.  
+📌 **Example:** `Product_Description` should not contain offensive words.  
+**Rule Name:** `Product_Description_ProhibitedWordsCheck`  
+
+```sql
+SELECT * FROM Products WHERE Product_Description LIKE '%bannedword%';
+```
+
+### ✅ **Concatenation Consistency Check**  
+Ensures that concatenated values follow a predefined rule.  
+📌 **Example:** `Employee_ID` should be a combination of `Department_Code` + `Employee_Number`.  
+**Rule Name:** `Employee_ID_ConcatenationCheck`  
+
+```sql
+SELECT * FROM Employees WHERE Employee_ID <> CONCAT(Department_Code, Employee_Number);
+```
+
+---
+
+### **Summary Table of Common Data Quality Rules for Strings**
+| **Rule Name** | **Description** | **Example Field** |
+|--------------|----------------|----------------|
+| **NullCheck** | Ensures field is not null or empty | `Customer_Name` |
+| **AllowedCharacters** | Checks for only valid characters | `Product_Code` |
+| **FormatCheck** | Ensures format follows regex pattern | `Email` |
+| **LengthCheck** | Ensures string has the correct length | `Zip_Code` |
+| **UppercaseCheck** | Ensures all values are uppercase | `Country_Name` |
+| **TrimCheck** | Removes leading/trailing spaces | `Customer_Name` |
+| **UniquenessCheck** | Ensures values are unique | `Employee_ID` |
+| **ReferenceCheck** | Ensures values exist in another table | `Customer_State` |
+| **ProhibitedWordsCheck** | Blocks certain words in string fields | `Product_Description` |
+| **ConcatenationCheck** | Ensures correct concatenation logic | `Employee_ID` |
+
+Would you like SQL implementations or adjustments for a specific tool like **Informatica, Talend, or DataStage**? 🚀
+
+
+
+Timeliness rules for **string data elements** ensure that the data is entered, updated, or processed within an acceptable timeframe. While timeliness typically applies to date/time fields, string fields can also have timeliness constraints, such as processing timestamps, data entry deadlines, and real-time data validations.  
+
+---
+
+### **📌 Common Data Quality Rules for String Data Elements (Timeliness)**  
+
+| **Rule Name**                  | **Description** | **Example Field** |
+|---------------------------------|----------------|----------------|
+| **EntryTimelinessCheck**        | Ensures the value was entered within a required timeframe. | `Customer_Address` |
+| **ProcessingTimeCheck**         | Ensures the data was processed within an expected time limit. | `Transaction_Status` |
+| **UpdateFrequencyCheck**        | Ensures the field is updated within a specified interval. | `Customer_Contact` |
+| **DataStalenessCheck**          | Ensures the data has not been outdated beyond an acceptable period. | `Customer_Notes` |
+| **LastModifiedTimelinessCheck** | Ensures that a record was last modified within a defined period. | `Profile_Information` |
+| **DataLatencyCheck**            | Ensures that string-based logs or events arrive within an expected time from their source. | `Event_Logs` |
+
+---
+
+## **🔍 1. Data Entry Timeliness Check**  
+Ensures that a string field (e.g., `Customer_Address`) is entered within a required time window after a related event (e.g., customer registration).  
+
+**Rule Name:** `Customer_Address_EntryTimelinessCheck`  
+**Example Rule:** `Customer_Address` should be entered within **24 hours** of `Customer_Registration_Date`.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Customer_Address IS NOT NULL 
+AND TIMESTAMPDIFF(HOUR, Customer_Registration_Date, Created_Timestamp) > 24;
+```
+
+---
+
+## **🔍 2. Processing Time Check**  
+Ensures that a string field (e.g., `Transaction_Status`) is updated within an expected processing time.  
+
+**Rule Name:** `Transaction_Status_ProcessingTimeCheck`  
+**Example Rule:** `Transaction_Status` should be updated to "Processed" within **2 hours** of transaction initiation.  
+
+```sql
+SELECT * 
+FROM Transactions 
+WHERE Transaction_Status = 'Pending' 
+AND TIMESTAMPDIFF(HOUR, Transaction_Start_Time, NOW()) > 2;
+```
+
+---
+
+## **🔍 3. Update Frequency Check**  
+Ensures that string-based information (e.g., `Customer_Contact`) is regularly updated.  
+
+**Rule Name:** `Customer_Contact_UpdateFrequencyCheck`  
+**Example Rule:** `Customer_Contact` should be updated at least once every **6 months**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE TIMESTAMPDIFF(MONTH, Last_Updated_Timestamp, NOW()) > 6;
+```
+
+---
+
+## **🔍 4. Data Staleness Check**  
+Ensures that data fields, like `Customer_Notes`, are refreshed periodically.  
+
+**Rule Name:** `Customer_Notes_DataStalenessCheck`  
+**Example Rule:** `Customer_Notes` should not be older than **1 year**.  
+
+```sql
+SELECT * 
+FROM Customer_Interactions 
+WHERE TIMESTAMPDIFF(DAY, Last_Updated_Timestamp, NOW()) > 365;
+```
+
+---
+
+## **🔍 5. Last Modified Timeliness Check**  
+Ensures that a record (e.g., `Profile_Information`) is modified within a reasonable timeframe.  
+
+**Rule Name:** `Profile_Information_LastModifiedTimelinessCheck`  
+**Example Rule:** `Profile_Information` should be updated at least **once a year**.  
+
+```sql
+SELECT * 
+FROM User_Profiles 
+WHERE TIMESTAMPDIFF(YEAR, Last_Modified_Timestamp, NOW()) > 1;
+```
+
+---
+
+## **🔍 6. Data Latency Check**  
+Ensures that incoming text-based log data (e.g., `Event_Logs`) is processed within a reasonable timeframe from its source.  
+
+**Rule Name:** `Event_Logs_DataLatencyCheck`  
+**Example Rule:** `Event_Logs` should be received within **15 minutes** of creation at the source system.  
+
+```sql
+SELECT * 
+FROM Event_Logs 
+WHERE TIMESTAMPDIFF(MINUTE, Source_Creation_Timestamp, Received_Timestamp) > 15;
+```
+
+---
+
+### **🔎 Summary Table of Timeliness Rules for String Data Elements**
+| **Rule Name**                        | **Purpose**                                         | **Example Field** |
+|---------------------------------------|---------------------------------------------------|----------------|
+| **EntryTimelinessCheck**              | Ensures timely data entry                        | `Customer_Address` |
+| **ProcessingTimeCheck**               | Validates if data processing happens on time     | `Transaction_Status` |
+| **UpdateFrequencyCheck**              | Ensures regular updates                         | `Customer_Contact` |
+| **DataStalenessCheck**                | Ensures string data isn't outdated              | `Customer_Notes` |
+| **LastModifiedTimelinessCheck**       | Checks if records are modified regularly        | `Profile_Information` |
+| **DataLatencyCheck**                  | Ensures logs/events are received on time        | `Event_Logs` |
+
+---
+
+### **🚀 Next Steps**
+Would you like:
+- SQL scripts tailored for your **specific database (Oracle, SQL Server, PostgreSQL, etc.)**?
+- Integration with **ETL tools (Informatica, Talend, DataStage)?**  
+- A **dashboard** to track and monitor these DQ rules?  
+
+Let me know how you'd like to proceed! 🔥
+
+
+### **🔍 Common Data Quality Rules for String Data Elements (Validity)**  
+Validity rules ensure that string data follows predefined formats, standards, and constraints. These rules help maintain **data integrity, accuracy, and compliance** with business requirements.  
+
+---
+
+### **📌 Key Validity Rules for String Data Elements**
+| **Rule Name**                     | **Description** | **Example Field** |
+|-----------------------------------|----------------|----------------|
+| **AllowedCharactersCheck**        | Ensures only valid characters are used | `Product_Code` |
+| **RegexFormatCheck**              | Ensures the string matches a specific pattern | `Email_Address` |
+| **LengthCheck**                   | Ensures the string length is within allowed limits | `Phone_Number` |
+| **CaseStandardizationCheck**      | Ensures data follows uppercase/lowercase rules | `Country_Name` |
+| **SpecialCharacterCheck**         | Ensures no special characters are present where restricted | `Customer_ID` |
+| **ReferentialIntegrityCheck**     | Ensures the value exists in a reference list | `State_Code` |
+| **BusinessLogicCheck**            | Ensures strings follow custom business rules | `Employee_ID` |
+| **WhitespaceCheck**               | Ensures no leading/trailing spaces | `Customer_Name` |
+| **DuplicateCheck**                | Ensures uniqueness when required | `Invoice_Number` |
+
+---
+
+## **🔍 1. Allowed Characters Check**  
+Ensures that a string contains only valid characters (e.g., letters and numbers).  
+
+**Rule Name:** `Product_Code_AllowedCharactersCheck`  
+**Example Rule:** `Product_Code` should only contain **A-Z, 0-9**.  
+
+```sql
+SELECT * 
+FROM Products 
+WHERE Product_Code NOT REGEXP '^[A-Z0-9]+$';
+```
+
+---
+
+## **🔍 2. Regular Expression (Regex) Format Check**  
+Ensures the string follows a defined pattern (e.g., email, phone number).  
+
+**Rule Name:** `Email_Address_RegexFormatCheck`  
+**Example Rule:** `Email_Address` should follow the **email format**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Email_Address NOT REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$';
+```
+
+---
+
+## **🔍 3. Length Constraint Check**  
+Ensures the string length is within valid limits.  
+
+**Rule Name:** `Phone_Number_LengthCheck`  
+**Example Rule:** `Phone_Number` should be exactly **10 digits**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE LENGTH(Phone_Number) <> 10;
+```
+
+---
+
+## **🔍 4. Case Standardization Check**  
+Ensures data follows case rules (uppercase, lowercase, title case).  
+
+**Rule Name:** `Country_Name_CaseStandardizationCheck`  
+**Example Rule:** `Country_Name` should be in **uppercase**.  
+
+```sql
+SELECT * 
+FROM Locations 
+WHERE Country_Name <> UPPER(Country_Name);
+```
+
+---
+
+## **🔍 5. Special Character Restriction Check**  
+Ensures that certain fields do not contain special characters.  
+
+**Rule Name:** `Customer_ID_SpecialCharacterCheck`  
+**Example Rule:** `Customer_ID` should only contain **A-Z, a-z, 0-9**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Customer_ID REGEXP '[^A-Za-z0-9]';
+```
+
+---
+
+## **🔍 6. Referential Integrity Check**  
+Ensures that values exist in a predefined reference table.  
+
+**Rule Name:** `State_Code_ReferentialIntegrityCheck`  
+**Example Rule:** `State_Code` must exist in the **States** table.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE State_Code NOT IN (SELECT State_Code FROM States);
+```
+
+---
+
+## **🔍 7. Business Logic Validation**  
+Ensures that string values follow business rules.  
+
+**Rule Name:** `Employee_ID_BusinessLogicCheck`  
+**Example Rule:** `Employee_ID` should be in format **"DEPT-XXXX"**.  
+
+```sql
+SELECT * 
+FROM Employees 
+WHERE Employee_ID NOT REGEXP '^DEPT-[0-9]{4}$';
+```
+
+---
+
+## **🔍 8. Whitespace Check**  
+Ensures there are no leading or trailing spaces in the string.  
+
+**Rule Name:** `Customer_Name_WhitespaceCheck`  
+**Example Rule:** `Customer_Name` should not have **leading/trailing spaces**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Customer_Name LIKE ' %' OR Customer_Name LIKE '% ';
+```
+
+---
+
+## **🔍 9. Duplicate Check**  
+Ensures the string values are unique when required.  
+
+**Rule Name:** `Invoice_Number_DuplicateCheck`  
+**Example Rule:** `Invoice_Number` should be **unique**.  
+
+```sql
+SELECT Invoice_Number, COUNT(*) 
+FROM Invoices 
+GROUP BY Invoice_Number 
+HAVING COUNT(*) > 1;
+```
+
+---
+
+### **🔎 Summary Table of Validity Rules for String Data Elements**
+| **Rule Name**                     | **Purpose**                                      | **Example Field** |
+|-----------------------------------|------------------------------------------------|----------------|
+| **AllowedCharactersCheck**        | Ensures only valid characters are used        | `Product_Code` |
+| **RegexFormatCheck**              | Ensures the string follows a specific pattern | `Email_Address` |
+| **LengthCheck**                   | Ensures the string length is within limits    | `Phone_Number` |
+| **CaseStandardizationCheck**      | Ensures consistent capitalization             | `Country_Name` |
+| **SpecialCharacterCheck**         | Restricts unwanted special characters         | `Customer_ID` |
+| **ReferentialIntegrityCheck**     | Ensures the value exists in a reference list  | `State_Code` |
+| **BusinessLogicCheck**            | Ensures custom business rules are followed    | `Employee_ID` |
+| **WhitespaceCheck**               | Ensures no leading/trailing spaces            | `Customer_Name` |
+| **DuplicateCheck**                | Ensures values are unique when required       | `Invoice_Number` |
+
+---
+
+### **🚀 Next Steps**
+Would you like:
+- **SQL implementations** for a **specific database** (Oracle, SQL Server, PostgreSQL)?  
+- Integration with **ETL tools (Informatica, Talend, DataStage, etc.)**?  
+- A **dashboard** for tracking these validity checks?  
+
+Let me know how you'd like to proceed! 🚀
+
+
+🔍 Common Data Quality Rules for String Data Elements (Completeness)
+Completeness rules ensure that string data is present, meaningful, and meets required conditions. Missing or incomplete data can lead to operational issues, reporting errors, and compliance risks.
+
+📌 Key Completeness Rules for String Data Elements
+Rule Name
+Description
+Example Field
+NotNullCheck
+Ensures a string field is not null or empty
+Customer_Name
+MandatoryFieldsCheck
+Ensures required fields are populated
+Email_Address
+NonBlankCheck
+Ensures values are not just spaces or special characters
+Street_Address
+MinLengthCheck
+Ensures a string has at least a minimum number of characters
+Product_Description
+DefaultValueCheck
+Ensures the field is not set to a generic default
+Phone_Number
+ConditionalCompletenessCheck
+Ensures completeness based on another field’s value
+State_Code
+MultiFieldCompletenessCheck
+Ensures at least one of multiple fields is populated
+Email_Address or Phone_Number
+RecordCompletenessCheck
+Ensures all required fields for a record are filled
+Customer_Profile
+
+🔍 1. Not Null or Empty Check
+Ensures that a required field is not null or blank.
+Rule Name: Customer_Name_NotNullCheck Example Rule: Customer_Name must not be null or empty.
+SELECT * 
+FROM Customers 
+WHERE Customer_Name IS NULL OR Customer_Name = '';
+
+
+🔍 2. Mandatory Fields Check
+Ensures that required fields are populated.
+Rule Name: Email_Address_MandatoryFieldsCheck Example Rule: Email_Address is mandatory for registered customers.
+SELECT * 
+FROM Customers 
+WHERE Customer_Type = 'Registered' AND (Email_Address IS NULL OR Email_Address = '');
+
+
+🔍 3. Non-Blank Check
+Ensures that a field contains actual data and not just spaces.
+Rule Name: Street_Address_NonBlankCheck Example Rule: Street_Address should not be only spaces.
+SELECT * 
+FROM Customers 
+WHERE TRIM(Street_Address) = '';
+
+
+🔍 4. Minimum Length Check
+Ensures that a string field has a minimum number of characters.
+Rule Name: Product_Description_MinLengthCheck Example Rule: Product_Description must be at least 10 characters long.
+SELECT * 
+FROM Products 
+WHERE LENGTH(Product_Description) < 10;
+
+
+🔍 5. Default Value Check
+Ensures that a field is not set to a generic or placeholder value.
+Rule Name: Phone_Number_DefaultValueCheck Example Rule: Phone_Number should not be set to "0000000000" or "N/A".
+SELECT * 
+FROM Customers 
+WHERE Phone_Number IN ('0000000000', 'N/A', 'UNKNOWN');
+
+
+🔍 6. Conditional Completeness Check
+Ensures completeness only if another field has a certain value.
+Rule Name: State_Code_ConditionalCompletenessCheck Example Rule: If Country_Code is "US", then State_Code must not be null.
+SELECT * 
+FROM Customers 
+WHERE Country_Code = 'US' AND (State_Code IS NULL OR State_Code = '');
+
+
+🔍 7. Multi-Field Completeness Check
+Ensures that at least one of multiple fields is populated.
+Rule Name: EmailOrPhone_MultiFieldCompletenessCheck Example Rule: Either Email_Address or Phone_Number must not be null.
+SELECT * 
+FROM Customers 
+WHERE (Email_Address IS NULL OR Email_Address = '') 
+AND (Phone_Number IS NULL OR Phone_Number = '');
+
+
+🔍 8. Record Completeness Check
+Ensures that all required fields for a record are populated.
+Rule Name: CustomerProfile_RecordCompletenessCheck Example Rule: The following fields must be populated: Customer_Name, Email_Address, Phone_Number, Address.
+SELECT * 
+FROM Customers 
+WHERE Customer_Name IS NULL 
+OR Email_Address IS NULL 
+OR Phone_Number IS NULL 
+OR Address IS NULL;
+
+
+🔎 Summary Table of Completeness Rules for String Data Elements
+Rule Name
+Purpose
+Example Field
+NotNullCheck
+Ensures required field is not null or empty
+Customer_Name
+MandatoryFieldsCheck
+Ensures critical fields are populated
+Email_Address
+NonBlankCheck
+Ensures values are not just spaces
+Street_Address
+MinLengthCheck
+Ensures minimum character length
+Product_Description
+DefaultValueCheck
+Prevents default/placeholder values
+Phone_Number
+ConditionalCompletenessCheck
+Ensures completeness based on other fields
+State_Code
+MultiFieldCompletenessCheck
+Ensures at least one of multiple fields is filled
+Email_Address or Phone_Number
+RecordCompletenessCheck
+Ensures all required fields for a record are filled
+Customer_Profile
+
+🚀 Next Steps
+Would you like:
+SQL scripts optimized for Oracle, SQL Server, PostgreSQL, etc.?
+Integration with ETL tools (Informatica, Talend, DataStage)?
+A dashboard for monitoring completeness issues?
+Let me know how you'd like to proceed! 🚀
+
+
+
+### **🔍 Common Data Quality Rules for String Data Elements (Uniqueness)**  
+Uniqueness rules ensure that string data does **not contain duplicate values** when uniqueness is required. This is critical for **identifiers, reference numbers, and key business data** to maintain data integrity and prevent redundancy.  
+
+---
+
+### **📌 Key Uniqueness Rules for String Data Elements**
+| **Rule Name**                | **Description** | **Example Field** |
+|------------------------------|----------------|----------------|
+| **UniquePrimaryKeyCheck**    | Ensures a primary key field has no duplicates | `Customer_ID` |
+| **UniqueConstraintCheck**    | Ensures a field should have only unique values | `Invoice_Number` |
+| **DuplicateDetectionCheck**  | Detects duplicate records based on multiple fields | `Customer_Name + DOB` |
+| **CaseInsensitiveUniqueness**| Ensures uniqueness regardless of letter case | `Username` |
+| **Format-BasedUniqueness**   | Ensures unique values follow a specific pattern | `Product_Code` |
+| **Cross-SystemUniquenessCheck** | Ensures values are unique across multiple databases | `Transaction_ID` |
+
+---
+
+## **🔍 1. Unique Primary Key Check**  
+Ensures that a **primary key** is unique and does not have duplicate values.  
+
+**Rule Name:** `Customer_ID_UniquePrimaryKeyCheck`  
+**Example Rule:** `Customer_ID` must be unique across all records.  
+
+```sql
+SELECT Customer_ID, COUNT(*) 
+FROM Customers 
+GROUP BY Customer_ID 
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## **🔍 2. Unique Constraint Check**  
+Ensures that a field (e.g., `Invoice_Number`) does not contain duplicate values.  
+
+**Rule Name:** `Invoice_Number_UniqueConstraintCheck`  
+**Example Rule:** `Invoice_Number` must be unique.  
+
+```sql
+SELECT Invoice_Number, COUNT(*) 
+FROM Invoices 
+GROUP BY Invoice_Number 
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## **🔍 3. Duplicate Detection Check**  
+Identifies duplicate records based on a combination of **multiple fields**.  
+
+**Rule Name:** `CustomerName_DOB_DuplicateDetectionCheck`  
+**Example Rule:** No two customers should have the same `Customer_Name` and `Date_of_Birth`.  
+
+```sql
+SELECT Customer_Name, Date_of_Birth, COUNT(*) 
+FROM Customers 
+GROUP BY Customer_Name, Date_of_Birth 
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## **🔍 4. Case-Insensitive Uniqueness Check**  
+Ensures values are **unique regardless of case sensitivity**.  
+
+**Rule Name:** `Username_CaseInsensitiveUniquenessCheck`  
+**Example Rule:** `Username` must be **case-insensitively unique**.  
+
+```sql
+SELECT LOWER(Username), COUNT(*) 
+FROM Users 
+GROUP BY LOWER(Username) 
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## **🔍 5. Format-Based Uniqueness Check**  
+Ensures unique values follow a **specific format** and remain unique.  
+
+**Rule Name:** `Product_Code_FormatBasedUniquenessCheck`  
+**Example Rule:** `Product_Code` must be in the format `PRD-XXXX` and unique.  
+
+```sql
+SELECT Product_Code, COUNT(*) 
+FROM Products 
+WHERE Product_Code REGEXP '^PRD-[0-9]{4}$'
+GROUP BY Product_Code 
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## **🔍 6. Cross-System Uniqueness Check**  
+Ensures uniqueness **across multiple systems or databases**.  
+
+**Rule Name:** `Transaction_ID_CrossSystemUniquenessCheck`  
+**Example Rule:** `Transaction_ID` should not be duplicated across different databases (e.g., `ERP` and `CRM`).  
+
+```sql
+SELECT Transaction_ID 
+FROM ERP_Transactions 
+WHERE Transaction_ID IN (SELECT Transaction_ID FROM CRM_Transactions);
+```
+
+---
+
+### **🔎 Summary Table of Uniqueness Rules for String Data Elements**
+| **Rule Name**                      | **Purpose**                                      | **Example Field** |
+|-----------------------------------|------------------------------------------------|----------------|
+| **UniquePrimaryKeyCheck**         | Ensures a primary key is unique                | `Customer_ID` |
+| **UniqueConstraintCheck**         | Ensures specific fields do not have duplicates | `Invoice_Number` |
+| **DuplicateDetectionCheck**       | Detects duplicate records based on fields     | `Customer_Name + DOB` |
+| **CaseInsensitiveUniqueness**     | Ensures uniqueness regardless of case         | `Username` |
+| **Format-BasedUniqueness**        | Ensures unique values follow a defined format | `Product_Code` |
+| **Cross-SystemUniquenessCheck**   | Ensures uniqueness across multiple databases  | `Transaction_ID` |
+
+---
+
+### **🚀 Next Steps**
+Would you like:
+- **Optimized SQL queries** for **Oracle, SQL Server, PostgreSQL, etc.?**  
+- Integration with **ETL tools (Informatica, Talend, DataStage)?**  
+- A **deduplication strategy** for handling duplicate data?  
+
+Let me know how you'd like to proceed! 🚀
+
+
+
+### **🔍 Common Data Quality Rules for String Data Elements (Accuracy)**  
+Accuracy rules ensure that string data correctly represents real-world values. This helps maintain **data integrity, reduce errors, and improve decision-making** by verifying correctness against **trusted sources, predefined standards, and business logic**.
+
+---
+
+### **📌 Key Accuracy Rules for String Data Elements**
+| **Rule Name**               | **Description** | **Example Field** |
+|----------------------------|----------------|----------------|
+| **ReferenceDataCheck**      | Ensures values exist in a trusted reference list | `Country_Name` |
+| **RegexPatternCheck**       | Ensures values follow a predefined format | `Postal_Code` |
+| **SpellCheck**              | Ensures values are spelled correctly | `City_Name` |
+| **BusinessLogicAccuracyCheck** | Ensures values meet business rules | `Employee_ID` |
+| **CrossFieldValidationCheck** | Ensures consistency across related fields | `State_Code` vs. `Country_Code` |
+| **ExternalValidationCheck** | Compares values with external authoritative sources | `Tax_ID` |
+| **CaseStandardizationCheck** | Ensures consistency in capitalization | `Customer_Name` |
+
+---
+
+## **🔍 1. Reference Data Validation Check**  
+Ensures that a string value exists in a predefined **trusted list** (e.g., valid country names).  
+
+**Rule Name:** `Country_Name_ReferenceDataCheck`  
+**Example Rule:** `Country_Name` must match a valid entry from the `Countries` table.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Country_Name NOT IN (SELECT Country_Name FROM Reference_Countries);
+```
+
+---
+
+## **🔍 2. Regex Pattern Accuracy Check**  
+Ensures that a string follows a **correct format** using regular expressions.  
+
+**Rule Name:** `Postal_Code_RegexPatternCheck`  
+**Example Rule:** `Postal_Code` must match the pattern for **US ZIP codes (5 or 9 digits)**.  
+
+```sql
+SELECT * 
+FROM Addresses 
+WHERE Postal_Code NOT REGEXP '^[0-9]{5}(-[0-9]{4})?$';
+```
+
+---
+
+## **🔍 3. Spell Check Against a Dictionary**  
+Ensures that values are **spelled correctly** using a dictionary or reference list.  
+
+**Rule Name:** `City_Name_SpellCheck`  
+**Example Rule:** `City_Name` must be a **valid city name** from a reference dataset.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE City_Name NOT IN (SELECT City_Name FROM Reference_Cities);
+```
+
+---
+
+## **🔍 4. Business Logic Accuracy Check**  
+Ensures that a string value follows **business-specific accuracy rules**.  
+
+**Rule Name:** `Employee_ID_BusinessLogicAccuracyCheck`  
+**Example Rule:** `Employee_ID` must start with the **department code** and follow `DEPT-XXXX` format.  
+
+```sql
+SELECT * 
+FROM Employees 
+WHERE Employee_ID NOT REGEXP '^(HR|IT|FIN)-[0-9]{4}$';
+```
+
+---
+
+## **🔍 5. Cross-Field Validation Check**  
+Ensures that related fields have **consistent values**.  
+
+**Rule Name:** `State_Code_Country_Code_CrossFieldValidationCheck`  
+**Example Rule:** If `Country_Code = 'US'`, then `State_Code` must be a **valid US state**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Country_Code = 'US' 
+AND State_Code NOT IN (SELECT State_Code FROM US_States);
+```
+
+---
+
+## **🔍 6. External Validation Check**  
+Ensures values match **external authoritative sources**.  
+
+**Rule Name:** `Tax_ID_ExternalValidationCheck`  
+**Example Rule:** `Tax_ID` must be validated **against a government database**.  
+
+> This rule usually requires an **API call or external service**, not just an SQL check.  
+> Example: Checking a **Tax ID** via an IRS API or a **business registration number** against an official registry.  
+
+---
+
+## **🔍 7. Case Standardization Check**  
+Ensures that values **maintain a standard case format** (e.g., uppercase for country names).  
+
+**Rule Name:** `Customer_Name_CaseStandardizationCheck`  
+**Example Rule:** `Customer_Name` must be stored in **Title Case**.  
+
+```sql
+SELECT * 
+FROM Customers 
+WHERE Customer_Name <> INITCAP(Customer_Name);
+```
+
+---
+
+### **🔎 Summary Table of Accuracy Rules for String Data Elements**
+| **Rule Name**                      | **Purpose**                                      | **Example Field** |
+|-----------------------------------|------------------------------------------------|----------------|
+| **ReferenceDataCheck**            | Ensures values exist in a trusted dataset     | `Country_Name` |
+| **RegexPatternCheck**             | Ensures values follow a predefined format    | `Postal_Code` |
+| **SpellCheck**                    | Ensures values are correctly spelled         | `City_Name` |
+| **BusinessLogicAccuracyCheck**    | Ensures business-specific accuracy rules    | `Employee_ID` |
+| **CrossFieldValidationCheck**     | Ensures consistency between related fields  | `State_Code` vs. `Country_Code` |
+| **ExternalValidationCheck**       | Compares values with external sources      | `Tax_ID` |
+| **CaseStandardizationCheck**      | Standardizes capitalization                 | `Customer_Name` |
+
+---
+
+### **🚀 Next Steps**
+Would you like:
+- **SQL scripts** tailored for **Oracle, SQL Server, PostgreSQL, etc.?**  
+- Integration with **ETL tools (Informatica, Talend, DataStage)?**  
+- An **automation strategy** for external validations?  
+
+Let me know how you'd like to proceed! 🚀
+
